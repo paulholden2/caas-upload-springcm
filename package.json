@@ -1,0 +1,41 @@
+{
+  "name": "caas-upload-springcm",
+  "version": "0.1.0",
+  "description": "CaaS SpringCM upload and delivery service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/paulholden2/caas-upload-springcm.git"
+  },
+  "keywords": [
+    "caas",
+    "springcm",
+    "spring",
+    "cm",
+    "classification",
+    "service",
+    "upload",
+    "deliver"
+  ],
+  "author": "Paul Holden",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/paulholden2/caas-upload-springcm/issues"
+  },
+  "homepage": "https://github.com/paulholden2/caas-upload-springcm#readme",
+  "dependencies": {
+    "async": "^2.6.1",
+    "commander": "^2.15.1",
+    "lodash": "^4.17.10",
+    "rimraf": "^2.6.2",
+    "springcm-node-sdk": "^1.4.1",
+    "winston": "^3.0.0",
+    "winston-daily-rotate-file": "^3.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1"
+  }
+}
