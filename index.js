@@ -1,8 +1,11 @@
 const path = require('path');
 const async = require('async');
 const _ = require('lodash');
+const rc = require('rc');
 const winston = require('winston');
+const etoj = require('utils-error-to-json');
 const commander = require('commander');
+const task = require('./task');
 
 require('winston-daily-rotate-file');
 
@@ -11,6 +14,7 @@ commander
   .option('-c, --config [path]', 'Specify a configuration file to load')
   .parse(process.argv);
 
+var config;
 var fileTransport, consoleTransport;
 
 async.waterfall([
@@ -24,14 +28,10 @@ async.waterfall([
      * ever crashes, we have a log dump of the thrown exception to review.
      */
 
-     var fileFormat = winston.format.printf((info, opts) => {
-       return `${info.timestamp} - ${info.level}: ${info.message}`
-     });
-
     // Daily rotating log files stored locally
     fileTransport = new (winston.transports.DailyRotateFile)({
       level: 'info',
-      format: winston.format.combine(winston.format.timestamp(), winston.format.prettyPrint(), fileFormat),
+      format: winston.format.json(),
       filename: path.join(__dirname, 'logs', 'log-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxFiles: '14d'
@@ -39,7 +39,7 @@ async.waterfall([
 
     consoleTransport = new (winston.transports.Console)({
       level: 'info',
-      format: winston.format.simple()
+      format: winston.format.simple(),
     });
 
     // Set up default logger with our transports
@@ -58,6 +58,26 @@ async.waterfall([
     winston.info('========================================');
 
     callback();
+  },
+  (callback) => {
+    /**
+     * Load app config
+     */
+
+    config = rc('caas');
+
+    if (!_.get(config, 'upload-springcm')) {
+      return callback(new Error('No upload-springcm configuration found'));
+    }
+
+    callback(null, _.get(config, 'upload-springcm.tasks'));
+  },
+  (tasks, callback) => {
+    /**
+     * Run each configured upload task
+     */
+
+    async.eachSeries(tasks, task, callback);
   }
 ], (err) => {
   /**
@@ -68,7 +88,9 @@ async.waterfall([
 
   if (err) {
     code = 1;
-    winston.error(err);
+    winston.error(err.message, {
+      err: etoj(err)
+    });
   }
 
   async.parallel([
