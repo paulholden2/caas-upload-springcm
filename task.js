@@ -45,7 +45,20 @@ module.exports = (task, callback) => {
         // To exit waterfall early
         const escape = callback;
 
+        var remoteDir;
+
         async.waterfall([
+          (callback) => {
+            springCm.getFolder(remote, (err, folder) => {
+              if (err) {
+                return callback(err);
+              }
+
+              remoteDir = folder;
+
+              callback();
+            });
+          },
           (callback) => {
             if (_.isString(triggers)) {
               triggers = [ triggers ];
@@ -71,8 +84,10 @@ module.exports = (task, callback) => {
 
                 triggerFiles = _.uniq(_.concat(triggerFiles, files));
 
-                winston.info('Found trigger file(s)', {
-                  files: triggerFiles,
+                var count = triggerFiles.length;
+
+                winston.info(`Found ${count} trigger file${count !== 1 ? 's' : ''}`, {
+                  files: count > 0 ? triggerFiles : undefined,
                   pattern: trigger
                 });
 
@@ -92,15 +107,17 @@ module.exports = (task, callback) => {
           },
           (triggerFiles, callback) => {
             /**
-             * Map each directory containing a trigger to its filtered
-             * file listing.
+             * Deliver the contents of the folder containing each found
+             * trigger file
              */
-            var directories = _.uniq(_.map(triggerFiles, (file) => {
-              return path.join(local, path.dirname(file));
-            }));
 
-            // Map each directory
-            async.mapSeries(directories, (directory, callback) => {
+            triggerFiles = triggerFiles.map((triggerFile) => {
+              return path.join(local, triggerFile);
+            });
+
+            async.eachSeries(triggerFiles, (triggerFile, callback) => {
+              var directory = path.dirname(triggerFile);
+
               async.waterfall([
                 (callback) => {
                   /**
@@ -168,37 +185,27 @@ module.exports = (task, callback) => {
                 },
                 (fileList, callback) => {
                   callback(null, _.map(fileList, file => path.join(directory, file)));
+                },
+                (fileList, callback) => {
+                  winston.info('Upload manifest', {
+                    triggerFile: triggerFile,
+                    fileList: fileList
+                  });
+
+                  async.eachSeries(fileList, (file, callback) => {
+                    // Upload
+                    callback();
+                  }, callback);
+                },
+                (callback) => {
+                  winston.info('Deleting trigger file', {
+                    triggerFile: triggerFile
+                  });
+
+                  fs.unlink(triggerFile, callback);
                 }
               ], callback);
             }, callback);
-          },
-          (listing, callback) => {
-            /**
-             * Listing is currently an array of arrays: one array for each
-             * directory a trigger file was found in. Flatten it before
-             * beginning upload.
-             */
-
-            callback(null, _.flatten(listing));
-          },
-          (listing, callback) => {
-            winston.info('Upload manifest', {
-              listing: listing
-            });
-
-            async.eachSeries(listing, (file, callback) => {
-              // Upload
-              callback();
-            }, callback)
-          },
-          (callback) => {
-            if (_.get(pathConfig, 'delete')) {
-              // rimraf folder
-              callback();
-            } else {
-              // delete trigger file so we don't deliver multiple times
-              callback();
-            }
           }
         ], callback);
       }, callback);
