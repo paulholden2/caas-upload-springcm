@@ -118,6 +118,7 @@ module.exports = (task, callback) => {
             async.eachSeries(triggerFiles, (triggerFile, callback) => {
               var directory = path.dirname(triggerFile);
 
+              // TODO: Move as much as possible into a separate function
               async.waterfall([
                 (callback) => {
                   /**
@@ -204,11 +205,11 @@ module.exports = (task, callback) => {
 
                   fs.unlink(triggerFile, callback);
                 }
-              ], callback);
-            }, callback);
+              ], callback); // triggerFile waterfall
+            }, callback); // eachSeries triggerFile
           }
-        ], callback);
-      }, callback);
+        ], callback); // pathConfig waterfall
+      }, callback); // eachSeries pathConfig
     }
   ], (err) => {
     if (err) {
