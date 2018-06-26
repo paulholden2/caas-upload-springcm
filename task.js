@@ -200,7 +200,13 @@ module.exports = (task, callback) => {
                       destination: remote
                     });
 
-                    springCm.uploadDocument(remoteDir, fs.createReadStream(file), callback);
+                    var filename = path.basename(file);
+                    var extname = path.extname(filename).slice(1);
+
+                    springCm.uploadDocument(remoteDir, fs.createReadStream(file), {
+                      name: filename,
+                      fileType: extname
+                    }, callback);
                   }, callback);
                 },
                 (callback) => {
