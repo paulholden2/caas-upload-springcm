@@ -52,9 +52,11 @@ async.waterfall([
     var cw = _.get(config, 'upload-springcm.logs.cloudwatch');
 
     if (cw) {
+      // Set up logging to AWS CloudWatch Logs
       cwlTransport = new WinstonCloudWatch(_.merge(cw, {
-        level: 'info',
-        format: winston.format.simple()
+        messageFormatter: (entry) => {
+          return JSON.stringify(_.get(entry, 'meta'));
+        }
       }));
 
       transports.push(cwlTransport);

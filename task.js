@@ -87,7 +87,8 @@ module.exports = (task, callback) => {
                 var count = triggerFiles.length;
 
                 winston.info(`Found ${count} trigger file${count !== 1 ? 's' : ''}`, {
-                  files: count > 0 ? triggerFiles : undefined,
+                  fileList: count > 0 ? triggerFiles : undefined,
+                  fileCount: count,
                   pattern: trigger
                 });
 
@@ -194,8 +195,12 @@ module.exports = (task, callback) => {
                   });
 
                   async.eachSeries(fileList, (file, callback) => {
-                    // Upload
-                    callback();
+                    winston.info('Uploading file', {
+                      file: file,
+                      destination: remote
+                    });
+
+                    springCm.uploadDocument(remoteDir, fs.createReadStream(file), callback);
                   }, callback);
                 },
                 (callback) => {
