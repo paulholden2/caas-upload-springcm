@@ -6,16 +6,18 @@ const winston = require('winston');
 const etoj = require('utils-error-to-json');
 const commander = require('commander');
 const task = require('./task');
+const WinstonCloudWatch = require('winston-cloudwatch');
 
 require('winston-daily-rotate-file');
+
+var config = rc('caas');
 
 commander
   .version('0.1.0', '-v, --version', 'Display the current software version')
   .option('-c, --config [path]', 'Specify a configuration file to load')
   .parse(process.argv);
 
-var config;
-var fileTransport, consoleTransport;
+var fileTransport, consoleTransport, cwlTransport;
 
 async.waterfall([
   (callback) => {
@@ -42,16 +44,29 @@ async.waterfall([
       format: winston.format.simple(),
     });
 
+    var transports = [
+      consoleTransport,
+      fileTransport
+    ];
+
+    var cw = _.get(config, 'upload-springcm.logs.cloudwatch');
+
+    if (cw) {
+      cwlTransport = new WinstonCloudWatch(_.merge(cw, {
+        level: 'info',
+        format: winston.format.simple()
+      }));
+
+      transports.push(cwlTransport);
+    }
+
     // Set up default logger with our transports
     winston.configure({
-      transports: [
-        consoleTransport,
-        fileTransport
-      ]
+      transports: transports
     });
 
     // Set up unhandled exception logging to our local log files and console
-    winston.exceptions.handle([ consoleTransport, fileTransport ]);
+    winston.exceptions.handle(transports);
 
     winston.info('========================================');
     winston.info('caas-upload-springcm');
@@ -61,23 +76,10 @@ async.waterfall([
   },
   (callback) => {
     /**
-     * Load app config
-     */
-
-    config = rc('caas');
-
-    if (!_.get(config, 'upload-springcm')) {
-      return callback(new Error('No upload-springcm configuration found'));
-    }
-
-    callback(null, _.get(config, 'upload-springcm.tasks'));
-  },
-  (tasks, callback) => {
-    /**
      * Run each configured upload task
      */
 
-    async.eachSeries(tasks, task, callback);
+    async.eachSeries(_.get(config, 'upload-springcm.tasks'), task, callback);
   }
 ], (err) => {
   /**
@@ -94,8 +96,15 @@ async.waterfall([
   }
 
   async.parallel([
-    callback => fileTransport.on('finished', callback),
-    callback => consoleTransport.on('finished', callback)
+    (callback) => fileTransport.on('finished', callback),
+    (callback) => consoleTransport.on('finished', callback),
+    (callback) => {
+      if (cwlTransport) {
+        cwlTransport.kthxbye(callback)
+      } else {
+        callback();
+      }
+    }
   ], () => {
     process.exit(code);
   });

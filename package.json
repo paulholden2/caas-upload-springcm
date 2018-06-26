@@ -37,6 +37,7 @@
     "springcm-node-sdk": "^1.4.1",
     "utils-error-to-json": "^1.0.0",
     "winston": "^3.0.0",
+    "winston-cloudwatch": "^1.13.1",
     "winston-daily-rotate-file": "^3.2.1"
   },
   "devDependencies": {
