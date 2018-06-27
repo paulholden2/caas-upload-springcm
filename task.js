@@ -6,6 +6,7 @@ const _ = require('lodash');
 const winston = require('winston');
 const etoj = require('utils-error-to-json');
 const SpringCM = require('springcm-node-sdk');
+const rimraf = require('rimraf');
 
 module.exports = (task, callback) => {
   var auth = _.get(task, 'auth');
@@ -215,6 +216,23 @@ module.exports = (task, callback) => {
                   });
 
                   fs.unlink(triggerFile, callback);
+                },
+                (callback) => {
+                  /**
+                   * Remove delivery folder
+                   */
+
+                  if (!_.get(pathConfig, 'delete')) {
+                    return callback();
+                  }
+
+                  winston.info('Removing delivery folder', {
+                    directory: directory
+                  });
+
+                  rimraf(directory, {
+                    disableGlob: true
+                  }, callback);
                 }
               ], callback); // triggerFile waterfall
             }, callback); // eachSeries triggerFile
