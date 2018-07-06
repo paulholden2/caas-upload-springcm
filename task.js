@@ -90,6 +90,7 @@ module.exports = (task, callback) => {
                 winston.info(`Found ${count} trigger file${count !== 1 ? 's' : ''}`, {
                   fileList: count > 0 ? triggerFiles : undefined,
                   fileCount: count,
+                  workingDirectory: local,
                   pattern: trigger
                 });
 
