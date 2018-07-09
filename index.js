@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const async = require('async');
 const _ = require('lodash');
@@ -6,18 +7,48 @@ const winston = require('winston');
 const etoj = require('utils-error-to-json');
 const commander = require('commander');
 const task = require('./task');
+const { Validator } = require('jsonschema');
 const WinstonCloudWatch = require('winston-cloudwatch');
 
 require('winston-daily-rotate-file');
 
-var config = rc('caas');
-
 commander
   .version('0.1.0', '-v, --version', 'Display the current software version')
   .option('-c, --config [path]', 'Specify a configuration file to load')
+  .option('--validate', 'Validate the configuration file')
   .parse(process.argv);
 
+var config;
 var fileTransport, consoleTransport, cwlTransport;
+
+function done(err) {
+  /**
+   * Log any error and exit.
+   */
+
+  var code = 0;
+
+  if (err) {
+    code = 1;
+    winston.error(err.message, {
+      err: etoj(err)
+    });
+  }
+
+  async.parallel([
+    (callback) => fileTransport.on('finished', callback),
+    (callback) => consoleTransport.on('finished', callback),
+    (callback) => {
+      if (cwlTransport) {
+        cwlTransport.kthxbye(callback);
+      } else {
+        callback();
+      }
+    }
+  ], () => {
+    process.exit(code);
+  });
+}
 
 async.waterfall([
   (callback) => {
@@ -41,7 +72,7 @@ async.waterfall([
 
     consoleTransport = new (winston.transports.Console)({
       level: 'info',
-      format: winston.format.simple(),
+      format: winston.format.simple()
     });
 
     var transports = [
@@ -49,6 +80,50 @@ async.waterfall([
       fileTransport
     ];
 
+    // Set up default logger with our transports
+    winston.configure({
+      transports: transports
+    });
+
+    // Set up unhandled exception logging to our local log files and console
+    winston.exceptions.handle(transports);
+
+    callback();
+  },
+  (callback) => {
+    /**
+     * If --validate option was passed, validate the provided config and
+     * exit.
+     */
+
+    config = rc('caas');
+
+    if (commander.validate) {
+      var validator = new Validator();
+      var schema = JSON.parse(fs.readFileSync('./schema.json'));
+
+      var result = validator.validate(config, schema);
+
+      if (!result) {
+        winston.info('Schema validator encountered an error');
+      }
+
+      if (result.errors.length === 0) {
+        winston.info('Schema validated');
+
+        done();
+      } else {
+        var err = new Error('Schema not validated');
+
+        err.errors = result.errors.map((err) => err.stack);
+
+        done(err);
+      }
+    } else {
+      callback();
+    }
+  },
+  (callback) => {
     var cw = _.get(config, 'upload-springcm.logs.cloudwatch');
 
     if (cw) {
@@ -59,20 +134,8 @@ async.waterfall([
         }
       }));
 
-      transports.push(cwlTransport);
+      winston.add(cwlTransport);
     }
-
-    // Set up default logger with our transports
-    winston.configure({
-      transports: transports
-    });
-
-    // Set up unhandled exception logging to our local log files and console
-    winston.exceptions.handle(transports);
-
-    winston.info('========================================');
-    winston.info('caas-upload-springcm');
-    winston.info('========================================');
 
     callback();
   },
@@ -81,33 +144,10 @@ async.waterfall([
      * Run each configured upload task
      */
 
+    winston.info('========================================');
+    winston.info('caas-upload-springcm');
+    winston.info('========================================');
+
     async.eachSeries(_.get(config, 'upload-springcm.tasks'), task, callback);
   }
-], (err) => {
-  /**
-   * Log any error and exit.
-   */
-
-  var code = 0;
-
-  if (err) {
-    code = 1;
-    winston.error(err.message, {
-      err: etoj(err)
-    });
-  }
-
-  async.parallel([
-    (callback) => fileTransport.on('finished', callback),
-    (callback) => consoleTransport.on('finished', callback),
-    (callback) => {
-      if (cwlTransport) {
-        cwlTransport.kthxbye(callback)
-      } else {
-        callback();
-      }
-    }
-  ], () => {
-    process.exit(code);
-  });
-});
+], done);

@@ -1,0 +1,148 @@
+{
+  "type": "object",
+  "properties": {
+    "upload-springcm": {
+      "type": "object",
+      "properties": {
+        "logs": {
+          "type": "object",
+          "properties": {
+            "cloudwatch": {
+              "type": "object",
+              "properties": {
+                "logGroupName": {
+                  "type": "string"
+                },
+                "logGroupName": {
+                  "type": "string"
+                },
+                "logStreamName": {
+                  "type": "string"
+                },
+                "awsAccessKeyId": {
+                  "type": "string"
+                },
+                "awsSecretKey": {
+                  "type": "string"
+                },
+                "awsRegion": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "logGroupName",
+                "logStreamName",
+                "awsAccessKeyId",
+                "awsSecretKey",
+                "awsRegion"
+              ]
+            }
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "job": {
+                "type": "string"
+              },
+              "customer": {
+                "type": "string"
+              },
+              "auth": {
+                "type": "object",
+                "properties": {
+                  "clientId": {
+                    "type": "string"
+                  },
+                  "clientSecret": {
+                    "type": "string"
+                  },
+                  "dataCenter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "clientId",
+                  "clientSecret",
+                  "dataCenter"
+                ]
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "remote": {
+                      "type": "string"
+                    },
+                    "local": {
+                      "type": "string"
+                    },
+                    "delete": {
+                      "type": "boolean"
+                    },
+                    "trigger": {
+                      "type": "string"
+                    },
+                    "filter": {
+                      "type": "object",
+                      "properties": {
+                        "in": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        },
+                        "out": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "in"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "remote",
+                    "local",
+                    "delete",
+                    "trigger",
+                    "filter"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "job",
+              "customer",
+              "auth",
+              "paths"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "upload-springcm"
+  ]
+}

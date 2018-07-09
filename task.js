@@ -40,8 +40,6 @@ module.exports = (task, callback) => {
         var remote = _.get(pathConfig, 'remote');
         var local = _.get(pathConfig, 'local');
         var triggers = _.get(pathConfig, 'trigger');
-        var filter = _.get(pathConfig, 'filter');
-        var triggerFile;
 
         // To exit waterfall early
         const escape = callback;
@@ -75,7 +73,7 @@ module.exports = (task, callback) => {
               cwd: local
             };
 
-            var triggerFiles = []
+            var triggerFiles = [];
 
             async.eachSeries(triggers, (trigger, callback) => {
               mg = new glob.Glob(trigger, mg, (err, files) => {
@@ -135,7 +133,7 @@ module.exports = (task, callback) => {
                     nodir: true,
                     nosort: true,
                     cwd: directory
-                  }
+                  };
 
                   async.eachSeries(inGlobs, (pattern, callback) => {
                     mg = new glob.Glob(pattern, mg, (err, files) => {
