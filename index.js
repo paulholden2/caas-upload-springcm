@@ -30,9 +30,7 @@ function done(err) {
 
   if (err) {
     code = 1;
-    winston.error(err.message, {
-      err: etoj(err)
-    });
+    winston.error(err.message, err);
   }
 
   async.parallel([
@@ -132,7 +130,8 @@ async.waterfall([
 
       if (result.errors.length === 0) {
         winston.info('Schema validated', {
-          serviceName: 'caas-upload-springcm'
+          serviceName: 'caas-upload-springcm',
+          loadedConfigs: config.configs
         });
 
         done();
@@ -140,6 +139,7 @@ async.waterfall([
         var err = new Error('Schema not validated');
 
         err.serviceName = 'caas-upload-springcm';
+        err.loadedConfigs = config.configs;
         err.errors = result.errors.map((err) => err.stack);
 
         done(err);
