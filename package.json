@@ -36,7 +36,7 @@
     "minimatch": "^3.0.4",
     "rc": "^1.2.8",
     "rimraf": "^2.6.2",
-    "springcm-node-sdk": "^1.4.1",
+    "springcm-node-sdk": "^1.5.4",
     "winston": "^3.0.0",
     "winston-cloudwatch": "^1.13.1",
     "winston-daily-rotate-file": "^3.2.1"
