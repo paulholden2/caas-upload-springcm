@@ -4,7 +4,6 @@ const glob = require('glob');
 const async = require('async');
 const _ = require('lodash');
 const winston = require('winston');
-const etoj = require('utils-error-to-json');
 const SpringCM = require('springcm-node-sdk');
 const rimraf = require('rimraf');
 
@@ -241,9 +240,7 @@ module.exports = (task, callback) => {
     }
   ], (err) => {
     if (err) {
-      winston.error(err.message, {
-        err: etoj(err)
-      });
+      winston.error(err.message, err);
     }
 
     if (springCm) {

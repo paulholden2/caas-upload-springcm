@@ -4,7 +4,6 @@ const async = require('async');
 const _ = require('lodash');
 const rc = require('rc');
 const winston = require('winston');
-const etoj = require('utils-error-to-json');
 const commander = require('commander');
 const task = require('./task');
 const { Validator } = require('jsonschema');
