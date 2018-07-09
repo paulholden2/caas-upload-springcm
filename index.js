@@ -91,6 +91,30 @@ async.waterfall([
     callback();
   },
   (callback) => {
+    var cw = _.get(config, 'upload-springcm.logs.cloudwatch');
+
+    if (cw) {
+      // Set up logging to AWS CloudWatch Logs
+      cwlTransport = new WinstonCloudWatch(_.merge(cw, {
+        messageFormatter: (entry) => {
+          return JSON.stringify(_.get(entry, 'meta'));
+        }
+      }));
+
+      winston.add(cwlTransport);
+
+      var transports = [
+        consoleTransport,
+        fileTransport,
+        cwlTransport
+      ];
+
+      winston.exceptions.handle(transports);
+    }
+
+    callback();
+  },
+  (callback) => {
     /**
      * If --validate option was passed, validate the provided config and
      * exit.
@@ -109,12 +133,15 @@ async.waterfall([
       }
 
       if (result.errors.length === 0) {
-        winston.info('Schema validated');
+        winston.info('Schema validated', {
+          serviceName: 'caas-upload-springcm'
+        });
 
         done();
       } else {
         var err = new Error('Schema not validated');
 
+        err.serviceName = 'caas-upload-springcm';
         err.errors = result.errors.map((err) => err.stack);
 
         done(err);
@@ -122,22 +149,6 @@ async.waterfall([
     } else {
       callback();
     }
-  },
-  (callback) => {
-    var cw = _.get(config, 'upload-springcm.logs.cloudwatch');
-
-    if (cw) {
-      // Set up logging to AWS CloudWatch Logs
-      cwlTransport = new WinstonCloudWatch(_.merge(cw, {
-        messageFormatter: (entry) => {
-          return JSON.stringify(_.get(entry, 'meta'));
-        }
-      }));
-
-      winston.add(cwlTransport);
-    }
-
-    callback();
   },
   (callback) => {
     /**

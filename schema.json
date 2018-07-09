@@ -139,7 +139,10 @@
             ]
           }
         }
-      }
+      },
+      "required": [
+        "tasks"
+      ]
     }
   },
   "required": [
