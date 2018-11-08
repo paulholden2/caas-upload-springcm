@@ -29,22 +29,22 @@
   "homepage": "https://github.com/paulholden2/caas-upload-springcm#readme",
   "dependencies": {
     "async": "^2.6.1",
-    "commander": "^2.15.1",
+    "commander": "^2.19.0",
+    "glob": "^7.1.3",
     "jsonschema": "^1.2.4",
-    "glob": "^7.1.2",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "minimatch": "^3.0.4",
     "rc": "^1.2.8",
     "rimraf": "^2.6.2",
-    "springcm-node-sdk": "^1.5.4",
-    "winston": "^3.0.0",
+    "springcm-node-sdk": "^1.6.0",
+    "winston": "^3.1.0",
     "winston-cloudwatch": "^1.13.1",
-    "winston-daily-rotate-file": "^3.2.1"
+    "winston-daily-rotate-file": "^3.5.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0"
